@@ -1,0 +1,115 @@
+<p>
+
+
+
+<title>Ubuntu Setup Guide</title>
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 16px;
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+h3 {
+  border-bottom: 1px solid #30363d;
+  padding-bottom: 6px;
+}
+
+pre {
+  background: #161b22;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+code {
+  font-family: Consolas, monospace;
+  color: #c9d1d9;
+}
+
+p {
+  margin: 10px 0;
+}
+</style>
+
+
+
+<h3>Step 1: Download the Ubuntu Filesystem (On your Laptop)</h3>
+<pre><code>wget https://cdimage.ubuntu.com/ubuntu-base/releases/noble/release/ubuntu-base-24.04.4-base-arm64.tar.gz</code></pre>
+
+<p>(If the link 404s, just navigate to cdimage.ubuntu.com/ubuntu-base/releases/ in your browser and copy the link for the latest ARM64 .tar.gz)</p>
+
+<h3>Step 2: Push and Extract (On the Phone)</h3>
+<pre><code>adb push ubuntu-base-24.04.4-base-arm64.tar.gz /data/local/tmp/</code></pre>
+
+<p>[enable root debugging in the developer setting in the phone]</p>
+
+<pre><code>mkdir -p /data/local/ubuntu</code></pre>
+<pre><code>cd /data/local/ubuntu</code></pre>
+<pre><code>tar -xzf /data/local/tmp/ubuntu-base-24.04.4-base-arm64.tar.gz</code></pre>
+
+<h3>Step 3: Create the "Start Script"</h3>
+
+<p>(just copy paste it)</p>
+
+<pre><code>cat &lt;&lt; 'EOF' &gt; /data/local/start_ubuntu.sh
+#!/system/bin/sh
+export MNT=/data/local/ubuntu
+
+# Put SELinux in permissive mode so it doesn't block chroot
+setenforce 0
+
+# Mount virtual filesystems if not already mounted
+mountpoint -q $MNT/proc || mount -t proc proc $MNT/proc
+mountpoint -q $MNT/sys || mount -t sysfs sys $MNT/sys
+mountpoint -q $MNT/dev || mount -o bind /dev $MNT/dev
+mountpoint -q $MNT/dev/pts || mount -o bind /dev/pts $MNT/dev/pts
+
+# Fix Android DNS mapping
+echo "nameserver 8.8.8.8" &gt; $MNT/etc/resolv.conf
+echo "127.0.0.1 localhost" &gt; $MNT/etc/hosts
+
+echo "Entering Ubuntu... Type 'exit' to leave."
+chroot $MNT /usr/bin/env -i \
+    HOME=/root \
+    PATH=/bin:/usr/bin:/sbin:/usr/sbin \
+    TERM=$TERM \
+    /bin/bash --login
+EOF</code></pre>
+
+<h3>Make it executable:</h3>
+<pre><code>chmod +x /data/local/start_ubuntu.sh</code></pre>
+
+<p>[Add the crucial Android networking groups]</p>
+<pre><code>groupadd -g 3003 aid_inet
+groupadd -g 3004 aid_net_raw
+usermod -aG aid_inet root
+usermod -aG aid_net_raw root</code></pre>
+
+<p>[close the session and reopen and run `apt update` if it fails run below command]</p>
+<pre><code># 1. Give the hidden _apt user Android internet permissions
+usermod -aG aid_inet _apt
+# 2. Tell apt not to use the sandbox (forces it to just use root)
+echo 'APT::Sandbox::User "root";' &gt; /etc/apt/apt.conf.d/99-chroot-sandbox
+# 3. Reload your current shell so the internet groups finally activate
+su - root
+# 4. Try the update again!
+apt update
+apt upgrade -y
+</code></pre>
+
+<p>[You now have a fully functioning native Linux backend upto this.]</p>
+
+<h3>Now we set up your specific stack: Django, Celery, Redis, and Ngrok.</h3>
+<pre><code>apt install -y python3 python3-pip python3-venv redis-server wget curl tmux nano build-essential</code></pre>
+
+<p>Since we don't have `systemd` to auto-start services in a chroot, we just tell Redis to start in the background (daemonize).</p>
+<pre><code>redis-server --daemonize yes</code></pre>
+
+<p><em>(You can verify it's running by typing `redis-cli ping`. It should reply `PONG`).</em></p>
+
+</p>
