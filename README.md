@@ -74,7 +74,10 @@ apt update
 apt upgrade -y
 
 ```
-[You now have a fully functioning native Linux backend upto this.]
+*run this code and voila you have an fully functional ubuntu terminal*
+```bash
+/data/local/start_ubuntu.sh
+```
 
 ### Now we set up your specific stack: Django, Celery, Redis, and Ngrok.
 ```bash
@@ -86,3 +89,5 @@ Since we don't have `systemd` to auto-start services in a chroot, we just tell R
 redis-server --daemonize yes
 ```
 *(You can verify it's running by typing `redis-cli ping`. It should reply `PONG`).*
+
+use tmux to keep the services running even when usb is plugged out
