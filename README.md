@@ -10,6 +10,12 @@ wget https://cdimage.ubuntu.com/ubuntu-base/releases/noble/release/ubuntu-base-2
 ```
 [enable root debugging in the developer setting in the phone]
 ```bash 
+adb root
+```
+```bash 
+adb shell
+```
+```bash 
 mkdir -p /data/local/ubuntu
 ```
 ```bash 
