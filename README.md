@@ -59,6 +59,10 @@ Make it executable:
 ```bash
 chmod +x /data/local/start_ubuntu.sh
 ```
+start the script:
+```bash
+/data/local/start_ubuntu.sh
+```
 [Add the crucial Android networking groups]
 ```bash
 groupadd -g 3003 aid_inet
@@ -78,22 +82,11 @@ su - root
 # 4. Try the update again!
 apt update
 apt upgrade -y
-
 ```
-*run this code and voila you have an fully functional ubuntu terminal*
+*voila you have an fully functional ubuntu terminal*
+
+### Now we install tmux and python and others to test this ubuntu
+tmux helps to run any service in background even if we exit from the adb shell, without for eg: python server stop as soon as we exit ubuntu
 ```bash
-/data/local/start_ubuntu.sh
+apt install -y python3 wget tmux nano
 ```
-
-### Now we set up your specific stack: Django, Celery, Redis, and Ngrok.
-```bash
-apt install -y python3 python3-pip python3-venv redis-server wget curl tmux nano build-essential
-```
-
-Since we don't have `systemd` to auto-start services in a chroot, we just tell Redis to start in the background (daemonize).
-```bash
-redis-server --daemonize yes
-```
-*(You can verify it's running by typing `redis-cli ping`. It should reply `PONG`).*
-
-use tmux to keep the services running even when usb is plugged out
